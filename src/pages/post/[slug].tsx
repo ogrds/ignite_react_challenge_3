@@ -2,9 +2,6 @@ import { GetStaticPaths, GetStaticProps } from 'next';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 
-// Components
-import Header from '../../components/Header';
-
 // Formats
 import { format } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
@@ -43,21 +40,13 @@ interface PostProps {
 export default function Post({ post }: PostProps) {
   const router = useRouter();
 
-  // If the page is not yet generated, this will be displayed
-  // initially until getStaticProps() finishes running
   if (router.isFallback) {
-    return <div>Carregando...</div>;
+    return (
+      <div className={styles.loading}>
+        <img src="/spinner.svg" alt="Carregando..." />
+      </div>
+    );
   }
-  // if (router.isFallback) {
-  //   return (
-  //     <>
-  //       <Header />
-  //       <div className={styles.loading}>
-  //         <img src="/spinner.svg" alt="Carregando..." />
-  //       </div>
-  //     </>
-  //   );
-  // }
 
   const readingTime = post.data.content.reduce((acc, obj) => {
     const body = RichText.asText(obj.body);
@@ -72,8 +61,6 @@ export default function Post({ post }: PostProps) {
       <Head>
         <title>{post.data.title} | spacetraveling</title>
       </Head>
-
-      <Header />
 
       <header
         className={styles.header}
@@ -168,6 +155,6 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
     props: {
       post,
     },
-    revalidate: 60 * 30,
+    revalidate: 30,
   };
 };
