@@ -8,7 +8,7 @@ import Prismic from '@prismicio/client';
 
 import commonStyles from '../styles/common.module.scss';
 import styles from './home.module.scss';
-import { FiCalendar, FiUser } from 'react-icons/fi';
+import { FiCalendar, FiLoader, FiUser } from 'react-icons/fi';
 
 import { format } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
@@ -38,21 +38,17 @@ export default function Home({ postsPagination }: HomeProps) {
 
   const [nextPage, setNextPage] = useState(next_page);
   const [posts, setPosts] = useState(results);
+  const [isSeacrching, setIsSeacrching] = useState(false);
 
   async function handleClickLoadMore() {
+    setIsSeacrching(true);
     if (nextPage) {
       const response = await fetch(nextPage).then(response => response.json());
       const newPosts = [...posts];
       response.results.map(post => {
         newPosts.push({
           uid: post.uid,
-          first_publication_date: format(
-            new Date(post.first_publication_date),
-            'dd MMM uuuu',
-            {
-              locale: ptBR,
-            }
-          ),
+          first_publication_date: post.first_publication_date,
           data: {
             title: post.data.title,
             subtitle: post.data.subtitle,
@@ -60,6 +56,8 @@ export default function Home({ postsPagination }: HomeProps) {
           },
         });
       });
+
+      setIsSeacrching(false);
       setNextPage(response.next_page);
       setPosts(newPosts);
     }
@@ -83,23 +81,42 @@ export default function Home({ postsPagination }: HomeProps) {
               <span>{post.data.subtitle}</span>
             </main>
             <footer className={styles.footerContainer}>
-              <span>
-                <FiCalendar />{' '}
-                {format(new Date(post.first_publication_date), 'dd MMM uuuu', {
-                  locale: ptBR,
-                })}
-              </span>
-              <span>
-                <FiUser /> {post.data.author}
-              </span>
+              <main>
+                <span>
+                  <FiCalendar />
+                </span>
+                <span>
+                  {format(
+                    new Date(post.first_publication_date),
+                    'dd MMM uuuu',
+                    {
+                      locale: ptBR,
+                    }
+                  )}
+                </span>
+              </main>
+              <main>
+                <span>
+                  <FiUser />
+                </span>
+                <span>{post.data.author}</span>
+              </main>
             </footer>
           </div>
         ))}
 
         {nextPage && (
-          <a onClick={handleClickLoadMore} className={styles.morePosts}>
-            Carregar mais posts
-          </a>
+          <button
+            onClick={handleClickLoadMore}
+            className={styles.morePosts}
+            disabled={isSeacrching}
+          >
+            {!isSeacrching ? (
+              <span>Carregar mais posts</span>
+            ) : (
+              <FiLoader size="2rem" />
+            )}
+          </button>
         )}
       </section>
     </>
@@ -110,7 +127,7 @@ export const getStaticProps: GetStaticProps = async () => {
   const prismic = getPrismicClient();
   const postsResponse = await prismic.query(
     [Prismic.predicates.at('document.type', 'post')],
-    { fetch: ['post.title', 'post.subtitle', 'post.author'], pageSize: 10 }
+    { fetch: ['post.title', 'post.subtitle', 'post.author'], pageSize: 2 }
   );
 
   const postsValues = postsResponse.results.map(post => {

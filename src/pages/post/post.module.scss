@@ -12,6 +12,7 @@
     font-size: 3rem;
     font-weight: 700;
     margin-bottom: 1rem;
+    line-height: 3.5rem;
   }
 
   section {
@@ -34,21 +35,30 @@
       }
     }
   }
+
+  @media (max-width: 720px) {
+    section {
+      flex-direction: column;
+
+      span + span {
+        margin-left: 0;
+        margin-top: 0.2rem;
+      }
+    }
+  }
 }
 
 .postContent {
-  text-align: justify;
-
   .headerContent {
     h3 {
       font-size: 2.25rem;
-      line-height: 5rem;
-      // margin-top: 2rem;
+      margin-bottom: 1rem;
     }
   }
 
   .textContent {
     font-size: 1.125rem;
+
     a {
       color: var(--highlight);
       cursor: pointer;
