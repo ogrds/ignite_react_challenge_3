@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { GetStaticProps } from 'next';
 import Link from 'next/link';
 import Head from 'next/head';
@@ -12,6 +12,7 @@ import { FiCalendar, FiUser } from 'react-icons/fi';
 
 import { format } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
+import Header from '../components/Header';
 
 interface Post {
   uid?: string;
@@ -69,6 +70,8 @@ export default function Home({ postsPagination }: HomeProps) {
       <Head>
         <title>Home | spacetraveling</title>
       </Head>
+
+      <Header />
 
       <section className={commonStyles.container}>
         {posts.map(post => (

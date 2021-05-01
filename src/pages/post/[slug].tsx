@@ -2,6 +2,9 @@ import { GetStaticPaths, GetStaticProps } from 'next';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 
+// Components
+import Header from '../../components/Header';
+
 // Formats
 import { format } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
@@ -42,9 +45,12 @@ export default function Post({ post }: PostProps) {
 
   if (router.isFallback) {
     return (
-      <div className={styles.loading}>
-        <img src="/spinner.svg" alt="Carregando..." />
-      </div>
+      <>
+        <Header />
+        <div className={styles.loading}>
+          <img src="/spinner.svg" alt="Carregando..." />
+        </div>
+      </>
     );
   }
 
@@ -61,6 +67,8 @@ export default function Post({ post }: PostProps) {
       <Head>
         <title>{post.data.title} | spacetraveling</title>
       </Head>
+
+      <Header />
 
       <header
         className={styles.header}
@@ -155,5 +163,6 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
     props: {
       post,
     },
+    revalidate: 30,
   };
 };
