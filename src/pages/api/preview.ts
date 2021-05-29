@@ -4,7 +4,7 @@ import { getPrismicClient, linkResolver } from '../../services/prismic';
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   const { token: ref, documentId } = req.query;
   const redirectUrl = await getPrismicClient(req)
-    .getPreviewResolver(ref, documentId)
+    .getPreviewResolver(String(ref), String(documentId))
     .resolve(linkResolver, '/');
 
   if (!redirectUrl) {
