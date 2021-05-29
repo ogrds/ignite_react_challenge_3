@@ -18,9 +18,12 @@ import { RichText } from 'prismic-dom';
 import commonStyles from '../../styles/common.module.scss';
 import styles from './post.module.scss';
 import { FiCalendar, FiClock, FiUser } from 'react-icons/fi';
+import { Comments } from '../../components/Comments';
+import Link from 'next/link';
 
 interface Post {
   first_publication_date: string | null;
+  last_publication_date: string | null;
   data: {
     title: string;
     banner: {
@@ -36,11 +39,19 @@ interface Post {
   };
 }
 
-interface PostProps {
-  post: Post;
+interface NewPost {
+  link: string;
+  title: string;
 }
 
-export default function Post({ post }: PostProps) {
+interface PostProps {
+  post: Post;
+  preview: boolean;
+  next: NewPost;
+  previous: NewPost;
+}
+
+export default function Post({ post, preview, previous, next }: PostProps) {
   const router = useRouter();
 
   if (router.isFallback) {
@@ -95,6 +106,19 @@ export default function Post({ post }: PostProps) {
               <FiClock /> <span>{readingTime} min</span>
             </span>
           </section>
+          <section>
+            {post.last_publication_date && (
+              <span>
+                {format(
+                  new Date(post.last_publication_date),
+                  "'* editado em 'dd MMM uuuu 'as' kk':'mm",
+                  {
+                    locale: ptBR,
+                  }
+                )}
+              </span>
+            )}
+          </section>
           <div className={styles.postContent}>
             {post.data.content.map((content, i) => {
               return (
@@ -116,6 +140,36 @@ export default function Post({ post }: PostProps) {
           </div>
         </div>
       </main>
+
+      <footer className={styles.footer}>
+        {previous.title ? (
+          <div className={styles.previous}>
+            <span title={previous.title}>{previous.title}</span>
+            <a href={`/post/${previous.link}`}>Post anterior</a>
+          </div>
+        ) : (
+          <div></div>
+        )}
+
+        {next.title ? (
+          <div className={styles.next}>
+            <span title={next.title}>{next.title}</span>
+            <a href={`/post/${next.link}`}>Próximo post</a>
+          </div>
+        ) : (
+          <div></div>
+        )}
+      </footer>
+
+      <Comments />
+
+      {preview && (
+        <aside className={commonStyles.previewMode}>
+          <Link href="/api/exit-preview">
+            <a>Sair do modo Preview</a>
+          </Link>
+        </aside>
+      )}
     </>
   );
 }
@@ -137,14 +191,47 @@ export const getStaticPaths: GetStaticPaths = async () => {
   };
 };
 
-export const getStaticProps: GetStaticProps = async ({ params }) => {
+export const getStaticProps: GetStaticProps = async ({
+  params,
+  preview = false,
+  previewData,
+}) => {
   const { slug } = params;
   const prismic = getPrismicClient();
-  const response = await prismic.getByUID('post', String(slug), {});
+  const response = await prismic.getByUID('post', String(slug), {
+    ref: previewData?.ref ?? null,
+  });
+
+  const prevpost = (
+    await prismic.query([Prismic.predicates.at('document.type', 'post')], {
+      pageSize: 1,
+      after: response.id,
+      orderings: '[document.first_publication_date desc]',
+    })
+  ).results[0];
+
+  const nextpost = (
+    await prismic.query([Prismic.predicates.at('document.type', 'post')], {
+      pageSize: 1,
+      after: response.id,
+      orderings: '[document.first_publication_date]',
+    })
+  ).results[0];
+
+  const previous = {
+    link: prevpost?.uid || null,
+    title: prevpost?.data.title || null,
+  };
+
+  const next = {
+    link: nextpost?.uid || null,
+    title: nextpost?.data.title || null,
+  };
 
   const post = {
     uid: response.uid,
     first_publication_date: response.first_publication_date,
+    last_publication_date: response.last_publication_date,
     data: {
       title: response.data.title,
       subtitle: response.data.subtitle,
@@ -161,7 +248,10 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
 
   return {
     props: {
+      preview,
       post,
+      next,
+      previous,
     },
     revalidate: 30,
   };
